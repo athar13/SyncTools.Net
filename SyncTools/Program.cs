@@ -1,12 +1,27 @@
 ﻿using System;
+using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace SyncTools
 {
     class Program
     {
-        static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            if (Debugger.IsAttached)
+            {
+                if (args.Length == 0)
+                {
+                    args = new string[]
+                    {
+                        "--directory", @"c:\temp\sysinternals",
+                        "--url", "https://live.sysinternals.com/",
+                        "--verbose"
+                    };
+                }
+            }
+
+            await new SyncTools(args).Run();
         }
     }
 }

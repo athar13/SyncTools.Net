@@ -3,6 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30114.105
 MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SyncTools", "SyncTools\SyncTools.csproj", "{2F4DCB92-1B9D-4463-8815-D176362464B6}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8FF8C03A-7F23-48C6-BD9F-8EC77D38A1C8}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+		LICENSE = LICENSE
+		README.md = README.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,7 +21,24 @@ Global
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
 	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2F4DCB92-1B9D-4463-8815-D176362464B6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2F4DCB92-1B9D-4463-8815-D176362464B6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2F4DCB92-1B9D-4463-8815-D176362464B6}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{2F4DCB92-1B9D-4463-8815-D176362464B6}.Debug|x64.Build.0 = Debug|Any CPU
+		{2F4DCB92-1B9D-4463-8815-D176362464B6}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{2F4DCB92-1B9D-4463-8815-D176362464B6}.Debug|x86.Build.0 = Debug|Any CPU
+		{2F4DCB92-1B9D-4463-8815-D176362464B6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2F4DCB92-1B9D-4463-8815-D176362464B6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2F4DCB92-1B9D-4463-8815-D176362464B6}.Release|x64.ActiveCfg = Release|Any CPU
+		{2F4DCB92-1B9D-4463-8815-D176362464B6}.Release|x64.Build.0 = Release|Any CPU
+		{2F4DCB92-1B9D-4463-8815-D176362464B6}.Release|x86.ActiveCfg = Release|Any CPU
+		{2F4DCB92-1B9D-4463-8815-D176362464B6}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {95B406D5-8785-4081-98F6-6AC0EE61F48B}
 	EndGlobalSection
 EndGlobal
