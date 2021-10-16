@@ -14,6 +14,7 @@ I did create one, but did not have a confirmed strategy, it would download all t
 - Cleaner code structure
 - Asynchronous file download, possibly multiple simultaneously
 - Figure out how to print download progress in console
+- Create a default .syncignore file if it's not there already
 
 #### Known bugs & issues
 - Download status is not updated correctly. Need to consolidated list of up to date and updated tools.
