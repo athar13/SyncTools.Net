@@ -11,10 +11,10 @@ Since I was introduced to Sysinternals (formerly known as Winternals), I have re
 I did create one, but did not have a confirmed strategy, it would download all the tools and overwrite them. After I stumbled across Kenny's [gist](https://gist.github.com/kennykerr/d72b59a7674001f51431cb973df84cdd), I decided to port it to C#.
 
 #### TODO list
+- Print new version with file
+- Figure out how to print download progress in console
 - Cleaner code structure
 - Asynchronous file download, possibly multiple simultaneously
-- Figure out how to print download progress in console
-- Create a default .syncignore file if it's not there already
 
 #### Known bugs & issues
 - Download status is not updated correctly. Need to consolidated list of up to date and updated tools.
