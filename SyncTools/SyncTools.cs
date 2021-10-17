@@ -20,12 +20,11 @@ namespace SyncTools
         private const string DEF_STATUSFILE = ".syncstatus";
         private const string DEF_DOWNLOADURL = "https://live.sysinternals.com/";
 
-        private static readonly HttpClient httpClient = new HttpClient();
+        private static readonly HttpClient httpClient = new();
 
         private readonly string cachePath;
 
         private bool bIsDebug;
-        private bool bVerbose;
         private string DirectoryPath;
         private string DownloadUrl;
 
@@ -53,7 +52,6 @@ namespace SyncTools
         private void LoadDefaultValues()
         {
             bIsDebug = false;
-            bVerbose = false;
             DirectoryPath = Environment.CurrentDirectory;
             DownloadUrl = DEF_DOWNLOADURL;
         }
@@ -71,25 +69,17 @@ namespace SyncTools
                         if (arg.Equals("-d", StringComparison.OrdinalIgnoreCase) || arg.Equals("--directory", StringComparison.OrdinalIgnoreCase))
                         {
                             DirectoryPath = args[++pos];
-                            //PrintDebug($"{nameof(ParseArguments)} - Directory set to {DirectoryPath}.");
                         }
 
                         if (arg.Equals("-u", StringComparison.OrdinalIgnoreCase) || arg.Equals("--url", StringComparison.OrdinalIgnoreCase))
                         {
                             DownloadUrl = args[++pos];
-                            //PrintDebug($"{nameof(ParseArguments)} - Url set to {DownloadUrl}.");
                         }
 
                         if (arg.Equals("-t", StringComparison.OrdinalIgnoreCase) || arg.Equals("--testmode", StringComparison.OrdinalIgnoreCase))
                         {
                             Console.WriteLine($"{nameof(ParseArguments)} - Debug mode enabled.");
                             bIsDebug = true;
-                        }
-
-                        if (arg.Equals("-v", StringComparison.OrdinalIgnoreCase) || arg.Equals("--verbose", StringComparison.OrdinalIgnoreCase))
-                        {
-                            Console.WriteLine($"{nameof(ParseArguments)} - Verbose mode enabled.");
-                            bVerbose = true;
                         }
 
                         if (arg.Equals("-h", StringComparison.OrdinalIgnoreCase) || arg.Equals("--help", StringComparison.OrdinalIgnoreCase))
@@ -195,14 +185,6 @@ namespace SyncTools
 
             foreach (var item in list)
             {
-                //if (item.IsNew)
-                //{
-                //    Console.Write($"* {item.File} ");
-                //}
-                //else
-                //{
-                //    Console.Write($"u {item.File} ");
-                //}
                 var result = DownloadFile(DownloadUrl, item.File, DirectoryPath);
                 if (result)
                 {
@@ -378,7 +360,7 @@ namespace SyncTools
             return downloadList;
         }
 
-        private void DisplayReport(int countNew, int countUpdate, int countUpToDate)
+        private static void DisplayReport(int countNew, int countUpdate, int countUpToDate)
         {
             if (countUpToDate > 0)
             {
@@ -402,22 +384,14 @@ namespace SyncTools
             }
         }
 
-        private bool ShouldIgnore(string file, string ignore, bool strict = true)
+        private static bool ShouldIgnore(string file, string ignore, bool strict = true)
         {
             var pos = file.LastIndexOf(".");
             if (pos < 0 && strict)
                 return true;
 
-            var ext = $"*{file.Substring(pos)}";
+            var ext = $"*{file[pos..]}";
             return ignore.IndexOf(ext, 0, StringComparison.OrdinalIgnoreCase) >= 0;
-        }
-
-        private void PrintVerbose(string message)
-        {
-            if (bVerbose)
-            {
-                Console.WriteLine(message);
-            }
         }
 
         private void PrintDebug(string message)
@@ -428,12 +402,12 @@ namespace SyncTools
             }
         }
 
-        private void PrintHeaders()
+        private static void PrintHeaders()
         {
             Console.WriteLine(DEF_BANNER);
         }
 
-        private void PrintHelp()
+        private static void PrintHelp()
         {
             var format = "    {0,-11} ({1,-2}) - {2}.";
             Console.WriteLine("Usage:");
@@ -441,7 +415,6 @@ namespace SyncTools
             Console.WriteLine();
             Console.WriteLine(string.Format(format, "--url", "-u", "Url"));
             Console.WriteLine(string.Format(format, "--directory", "-d", "Output directory"));
-            ////Console.WriteLine(string.Format(format, "--verbose", "-v", "Display detailed information"));
             Console.WriteLine(string.Format(format, "--help", "-h", "This help information"));
         }
 
