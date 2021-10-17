@@ -3,11 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace SyncTools
@@ -19,8 +16,7 @@ namespace SyncTools
         private const string DEF_IGNOREFILE = ".syncignore";
         private const string DEF_STATUSFILE = ".syncstatus";
         private const string DEF_DOWNLOADURL = "https://live.sysinternals.com/";
-
-        private static readonly HttpClient httpClient = new();
+        private const string DEF_IGNORELIST = "*.sys;*.html;*.cnt;*.scr;*.hlp;*.txt;*.asp;*.aspx";
 
         private readonly string cachePath;
 
@@ -40,6 +36,18 @@ namespace SyncTools
                 Signature = signature;
                 IsNew = is_new;
             }
+        }
+
+        internal class FileUserState
+        {
+            public string Filename { get; }
+            public string CachePath { get; }
+            internal FileUserState(string file_name, string cache_path)
+            {
+                Filename = file_name;
+                CachePath = cache_path;
+            }
+
         }
 
         public SyncTools(string[] args)
@@ -68,25 +76,42 @@ namespace SyncTools
                     {
                         if (arg.Equals("-d", StringComparison.OrdinalIgnoreCase) || arg.Equals("--directory", StringComparison.OrdinalIgnoreCase))
                         {
+                            if ((args.Length <= pos + 1) || (args[pos + 1].StartsWith("-")))
+                            {
+                                Console.WriteLine("Output directory indicator (-d, --directory) found but value is not passed. Use -h or --help for more information.");
+                                Environment.Exit(-1);
+                            }
                             DirectoryPath = args[++pos];
+                            continue;
                         }
 
                         if (arg.Equals("-u", StringComparison.OrdinalIgnoreCase) || arg.Equals("--url", StringComparison.OrdinalIgnoreCase))
                         {
+                            if ((args.Length <= pos + 1) || (args[pos + 1].StartsWith("-")))
+                            {
+                                Console.WriteLine("Url indicator (-u, --url) found but value is not passed. Use -h or --help for more information.");
+                                Environment.Exit(-1);
+                            }
                             DownloadUrl = args[++pos];
+                            continue;
                         }
 
                         if (arg.Equals("-t", StringComparison.OrdinalIgnoreCase) || arg.Equals("--testmode", StringComparison.OrdinalIgnoreCase))
                         {
                             Console.WriteLine($"{nameof(ParseArguments)} - Debug mode enabled.");
                             bIsDebug = true;
+                            continue;
                         }
 
                         if (arg.Equals("-h", StringComparison.OrdinalIgnoreCase) || arg.Equals("--help", StringComparison.OrdinalIgnoreCase))
                         {
                             PrintHelp();
                             Environment.Exit(0);
+                            continue;
                         }
+
+                        Console.WriteLine($"{args[pos]} is an invalid option. Use -h or --help for more information.");
+                        Environment.Exit(-1);
                     }
                 }
             }
@@ -144,41 +169,6 @@ namespace SyncTools
             return true;
         }
 
-        public async Task Run()
-        {
-            PrintHeaders();
-            PrintDebug($"{nameof(SyncTools)}:{nameof(Run)} - START");
-
-            try
-            {
-                if (!PrepareDirectory(DirectoryPath))
-                {
-                    return;
-                }
-
-                if (!PrepareUrl(DownloadUrl))
-                {
-                    return;
-                }
-
-                // get list of tools to download
-                var toolList = await GetOnlineToolList(DownloadUrl);
-
-                // prepare list of downloadables
-                var downloadList = await PrepareDownloadList(toolList);
-
-                // run download
-                await DownloadUpdates(downloadList);
-
-                PrintDebug($"{nameof(SyncTools)}:{nameof(Run)} - END");
-            }
-            catch (Exception ex)
-            {
-                PrintDebug($"{nameof(SyncTools)}:{nameof(Run)} - ERROR");
-                PrintDebug($"Exception: {ex.Message}");
-            }
-        }
-
         private async Task<Dictionary<string, string>> DownloadUpdates(List<Download> list)
         {
             var status = new Dictionary<string, string>();
@@ -212,29 +202,13 @@ namespace SyncTools
             return status;
         }
 
-        internal class FileUserState
-        {
-            public string Filename { get; }
-            public string CachePath { get; }
-            ////public bool IsNew { get; }
-            internal FileUserState(string file_name, string cache_path) ////, bool is_new)
-            {
-                Filename = file_name;
-                CachePath = cache_path;
-                ////IsNew = is_new;
-            }
-
-        }
-
         private bool DownloadFile(string url, string filename, string filepath)
         {
             PrintDebug($"{nameof(DownloadFile)}:{filename} - START");
             try
             {
-                //
                 var cacheFile = Path.Combine(cachePath, filename);
                 var toolFile = Path.Combine(filepath, filename);
-                var userState = new FileUserState(toolFile, cacheFile);
 
                 // prepare
                 if (File.Exists(cacheFile))
@@ -245,52 +219,36 @@ namespace SyncTools
                     }
                     catch (Exception)
                     {
-                        // cannot delete for some reason so create a random but unique filename for cache
+                        // a random but unique filename for cache
                         cacheFile = Path.Combine(cachePath, $"{Guid.NewGuid()}-{DateTime.Now:yyyyMMddHHmmssfffff}-{filename}");
                     }
                 }
 
-                var downloadStatus = false;
-                // print start
-                using (var client = new WebClient())
-                using (var completedSignal = new AutoResetEvent(false))
+                try
                 {
-                    // download complete event handler
-                    client.DownloadFileCompleted += (s, e) =>
+                    // download file to cache
+                    using (var client = new WebClient())
                     {
-                        if (e.Error != null)
-                        {
-                            PrintDebug($"{nameof(DownloadFile)}:{filename} - DOWNLOAD FAIL");
-                            downloadStatus = false;
-                        }
-                        else
-                            downloadStatus = true;
-                        completedSignal.Set();
-                    };
+                        client.DownloadFile(url, cacheFile);
+                    }
 
-                    // download progress event handler
-                    client.DownloadProgressChanged += (s, e) =>
-                    {
-                        Console.SetCursorPosition(0, Console.CursorTop);
-                        Console.Write($"{filename} : {e.ProgressPercentage}");
-                    };
-
-                    // download
-                    client.DownloadFileAsync(new Uri(url), cacheFile, userState);
-                    completedSignal.WaitOne();
+                    // move from cache to folder
+                    File.Move(cacheFile, toolFile, true);
                 }
-
-                // move file from temp to folder
-                if (downloadStatus)
+                catch (Exception)
+                {
+                    PrintDebug($"{nameof(DownloadFile)}:{filename} - MOVE FAIL");
+                    return false;
+                }
+                finally
                 {
                     try
                     {
-                        File.Move(cacheFile, toolFile, true);
+                        File.Delete(cacheFile);
                     }
                     catch (Exception)
                     {
-                        PrintDebug($"{nameof(DownloadFile)}:{filename} - MOVE FAIL");
-                        return false;
+                        PrintDebug($"Unable to clean cache for {filename}.");
                     }
                 }
                 PrintDebug($"{nameof(DownloadFile)}:{filename} - END");
@@ -394,6 +352,8 @@ namespace SyncTools
             return ignore.IndexOf(ext, 0, StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
+        #region Print methods
+
         private void PrintDebug(string message)
         {
             if (bIsDebug)
@@ -417,6 +377,10 @@ namespace SyncTools
             Console.WriteLine(string.Format(format, "--directory", "-d", "Output directory"));
             Console.WriteLine(string.Format(format, "--help", "-h", "This help information"));
         }
+
+        #endregion Print methods
+
+        #region Status
 
         private async Task SaveStatus(Dictionary<string, string> status)
         {
@@ -465,6 +429,10 @@ namespace SyncTools
             return statuses;
         }
 
+        #endregion Status
+
+        #region Ignore
+
         private async Task<string> LoadIgnores()
         {
             PrintDebug($"{nameof(LoadIgnores)} - START");
@@ -477,6 +445,10 @@ namespace SyncTools
                     var lines = await File.ReadAllLinesAsync(file, Encoding.UTF8);
                     _ignore = string.Join(";", lines);
                 }
+                else
+                {
+                    _ignore = CreateDefaultIgnore(file);
+                }
             }
             catch (Exception ex)
             {
@@ -487,22 +459,35 @@ namespace SyncTools
             return _ignore;
         }
 
-        private async Task<Dictionary<string, string>> GetOnlineToolList(string url)
+        private string CreateDefaultIgnore(string filename)
+        {
+            PrintDebug($"{nameof(CreateDefaultIgnore)} - START");
+            var list = DEF_IGNORELIST.Split(";");
+            File.WriteAllLines(filename, list, Encoding.UTF8);
+            PrintDebug($"{nameof(CreateDefaultIgnore)} - END");
+            return DEF_IGNORELIST;
+        }
+
+        #endregion Ignore
+
+        #region Live Data
+
+        private Dictionary<string, string> GetOnlineToolList(string url)
         {
             // get data from online
-            var rawData = await GetLiveData(url);
+            var rawData = GetLiveData(url);
             if (string.IsNullOrEmpty(rawData))
-                return null;
+                return default;
 
             // clean the data
             var data = GetDataFromPre(rawData);
             if (string.IsNullOrEmpty(data))
-                return null;
+                return default;
 
             // lines
             var lines = GetLinesFromPreData(data);
             if (lines.Count <= 0)
-                return null;
+                return default;
 
             // tool mapping
             var tools = GetToolsFromList(lines);
@@ -510,27 +495,23 @@ namespace SyncTools
             return tools;
         }
 
-        private async Task<string> GetLiveData(string url)
+        private string GetLiveData(string url)
         {
             PrintDebug($"{nameof(GetLiveData)} - START");
+            var result = string.Empty;
             try
             {
-                httpClient.DefaultRequestHeaders.Accept.Clear();
-                httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("text/html"));
-                httpClient.DefaultRequestHeaders.Add("User-Agent", DEF_USERAGENT);
-
-                var response = await httpClient.GetAsync(url);
-                response.EnsureSuccessStatusCode();
-                string responseBody = await response.Content.ReadAsStringAsync();
-
-                return responseBody;
+                using var client = new WebClient();
+                client.Headers.Add(HttpRequestHeader.UserAgent, DEF_USERAGENT);
+                result = client.DownloadString(url);
             }
-            catch (Exception ex)
+            catch(Exception ex)
             {
                 PrintDebug($"{nameof(GetLiveData)} - ERROR");
-                PrintDebug($"{ex.Message}");
-                return string.Empty;
+                Console.WriteLine(ex.Message);
             }
+            PrintDebug($"{nameof(GetLiveData)} - END");
+            return result;
         }
 
         private string GetDataFromPre(string data)
@@ -613,5 +594,43 @@ namespace SyncTools
             }
             return tools;
         }
+
+        #endregion Live Data
+
+        public async Task Run()
+        {
+            PrintHeaders();
+            PrintDebug($"{nameof(SyncTools)}:{nameof(Run)} - START");
+
+            try
+            {
+                if (!PrepareDirectory(DirectoryPath))
+                {
+                    return;
+                }
+
+                if (!PrepareUrl(DownloadUrl))
+                {
+                    return;
+                }
+
+                // get list of tools to download
+                var toolList = GetOnlineToolList(DownloadUrl);
+
+                // prepare list of downloadables
+                var downloadList = await PrepareDownloadList(toolList);
+
+                // run download
+                await DownloadUpdates(downloadList);
+
+                PrintDebug($"{nameof(SyncTools)}:{nameof(Run)} - END");
+            }
+            catch (Exception ex)
+            {
+                PrintDebug($"{nameof(SyncTools)}:{nameof(Run)} - ERROR");
+                PrintDebug($"Exception: {ex.Message}");
+            }
+        }
+
     }
 }
