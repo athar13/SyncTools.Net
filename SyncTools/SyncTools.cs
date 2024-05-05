@@ -66,7 +66,7 @@ namespace SyncTools
 
         private void ParseArguments(string[] args)
         {
-            PrintDebug($"{nameof(ParseArguments)} - START");
+            PrintDebug(nameof(ParseArguments), "START");
             if (args.Length > 0)
             {
                 for (var pos = 0; pos < args.Length; pos++)
@@ -98,7 +98,7 @@ namespace SyncTools
 
                         if (arg.Equals("-t", StringComparison.OrdinalIgnoreCase) || arg.Equals("--testmode", StringComparison.OrdinalIgnoreCase))
                         {
-                            Console.WriteLine($"{nameof(ParseArguments)} - Debug mode enabled.");
+                            PrintDebug(nameof(ParseArguments), "Debug mode enabled.");
                             bIsDebug = true;
                             continue;
                         }
@@ -115,15 +115,15 @@ namespace SyncTools
                     }
                 }
             }
-            PrintDebug($"{nameof(ParseArguments)} - END");
+            PrintDebug(nameof(ParseArguments), "END");
         }
 
         private bool PrepareDirectory(string outdir)
         {
-            PrintDebug($"{nameof(PrepareDirectory)} - START");
+            PrintDebug(nameof(PrepareDirectory), "START");
             if (string.IsNullOrEmpty(outdir))
             {
-                PrintDebug($"{nameof(PrepareDirectory)} - Using curreny directory.");
+                PrintDebug(nameof(PrepareDirectory), "Using curreny directory.");
                 DirectoryPath = Environment.CurrentDirectory;
                 return true;
             }
@@ -133,20 +133,20 @@ namespace SyncTools
 
             if (!di.Exists)
             {
-                PrintDebug($"{nameof(PrepareDirectory)} - Output directory does not exist.");
+                PrintDebug(nameof(PrepareDirectory), "Output directory does not exist.");
                 return false;
             }
 
-            PrintDebug($"{nameof(PrepareDirectory)} - END");
+            PrintDebug(nameof(PrepareDirectory), "END");
             return true;
         }
 
         private bool PrepareUrl(string url)
         {
-            PrintDebug($"{nameof(PrepareUrl)} - START");
+            PrintDebug(nameof(PrepareUrl), "START");
             if (string.IsNullOrEmpty(url))
             {
-                PrintDebug($"{nameof(PrepareUrl)} - Using default url.");
+                PrintDebug(nameof(PrepareUrl), "Using default url.");
                 DownloadUrl = DEF_DOWNLOADURL;
                 return true;
             }
@@ -159,13 +159,13 @@ namespace SyncTools
                 }
                 catch (Exception ex)
                 {
-                    PrintDebug($"{nameof(PrepareUrl)} - ERROR");
+                    PrintDebug(nameof(PrepareUrl), "ERROR");
                     Console.WriteLine($"{url} is not a valid Url.");
-                    PrintDebug($"{ex.Message}");
+                    PrintDebug(nameof(PrepareUrl), ex.Message);
                     return false;
                 }
             }
-            PrintDebug($"{nameof(PrepareUrl)} - END");
+            PrintDebug(nameof(PrepareUrl), "END");
             return true;
         }
 
@@ -204,7 +204,7 @@ namespace SyncTools
 
         private bool DownloadFile(string url, string filename, string filepath)
         {
-            PrintDebug($"{nameof(DownloadFile)}:{filename} - START");
+            PrintDebug(nameof(DownloadFile), $"{filename} - START");
             try
             {
                 var cacheFile = Path.Combine(cachePath, filename);
@@ -237,7 +237,7 @@ namespace SyncTools
                 }
                 catch (Exception)
                 {
-                    PrintDebug($"{nameof(DownloadFile)}:{filename} - MOVE FAIL");
+                    PrintDebug(nameof(DownloadFile), $"{filename} - MOVE FAIL");
                     return false;
                 }
                 finally
@@ -248,15 +248,15 @@ namespace SyncTools
                     }
                     catch (Exception)
                     {
-                        PrintDebug($"Unable to clean cache for {filename}.");
+                        PrintDebug(nameof(DownloadFile), $"Unable to clean cache for {filename}.");
                     }
                 }
-                PrintDebug($"{nameof(DownloadFile)}:{filename} - END");
+                PrintDebug(nameof(DownloadFile), $"{filename} - END");
                 return true;
             }
             catch (Exception ex)
             {
-                PrintDebug($"{nameof(DownloadFile)}:{filename} - ERROR");
+                PrintDebug(nameof(DownloadFile), $"{filename} - ERROR");
                 Console.WriteLine(ex);
                 return false;
             }
@@ -264,7 +264,7 @@ namespace SyncTools
 
         private async Task<List<Download>> PrepareDownloadList(Dictionary<string, string> tools)
         {
-            PrintDebug($"{nameof(PrepareDownloadList)} - START");
+            PrintDebug(nameof(PrepareDownloadList), "START");
 
             // load statuses
             var status = await LoadStatus();
@@ -278,10 +278,10 @@ namespace SyncTools
             int countUpToDate = 0;
             foreach (var key in tools.Keys)
             {
-                PrintDebug($"{key}: {tools[key]}");
+                PrintDebug(nameof(PrepareDownloadList), $"{key}: {tools[key]}");
                 if (ShouldIgnore(key, ignorable))
                 {
-                    PrintDebug($"Ignoring {key}");
+                    PrintDebug(nameof(PrepareDownloadList), $"Ignoring {key}");
                     continue;
                 }
 
@@ -314,7 +314,7 @@ namespace SyncTools
 
             DisplayReport(countNew, countUpdate, countUpToDate);
 
-            PrintDebug($"{nameof(PrepareDownloadList)} - END");
+            PrintDebug(nameof(PrepareDownloadList), "END");
             return downloadList;
         }
 
@@ -354,11 +354,11 @@ namespace SyncTools
 
         #region Print methods
 
-        private void PrintDebug(string message)
+        private void PrintDebug(string methodName, string message)
         {
             if (bIsDebug)
             {
-                Console.WriteLine($"{DateTime.Now:s} - {message}");
+                Console.WriteLine($"{DateTime.Now:s} - {methodName.ToUpper()} - {message}");
             }
         }
 
@@ -384,7 +384,7 @@ namespace SyncTools
 
         private async Task SaveStatus(Dictionary<string, string> status)
         {
-            PrintDebug($"{nameof(SaveStatus)} - START");
+            PrintDebug(nameof(SaveStatus), "START");
             try
             {
                 var lines = new List<string>();
@@ -397,16 +397,15 @@ namespace SyncTools
             }
             catch (Exception ex)
             {
-                PrintDebug($"{nameof(SaveStatus)} - ERROR");
-                PrintDebug(ex.Message);
+                PrintDebug(nameof(SaveStatus), $"ERROR: {ex.Message}");
                 return;
             }
-            PrintDebug($"{nameof(SaveStatus)} - END");
+            PrintDebug(nameof(SaveStatus), "END");
         }
 
         private async Task<Dictionary<string, string>> LoadStatus()
         {
-            PrintDebug($"{nameof(LoadStatus)} - START");
+            PrintDebug(nameof(LoadStatus), "START");
             var statuses = new Dictionary<string, string>();
             try
             {
@@ -423,9 +422,9 @@ namespace SyncTools
             }
             catch (Exception ex)
             {
-                PrintDebug($"Error in LoadStatus. {ex.Message}");
+                PrintDebug(nameof(LoadStatus), $"Error in LoadStatus. {ex.Message}");
             }
-            PrintDebug($"{nameof(LoadStatus)} - END");
+            PrintDebug(nameof(LoadStatus), "END");
             return statuses;
         }
 
@@ -435,7 +434,7 @@ namespace SyncTools
 
         private async Task<string> LoadIgnores()
         {
-            PrintDebug($"{nameof(LoadIgnores)} - START");
+            PrintDebug(nameof(LoadIgnores), "START");
             var _ignore = string.Empty;
             try
             {
@@ -452,19 +451,18 @@ namespace SyncTools
             }
             catch (Exception ex)
             {
-                PrintDebug($"{nameof(LoadIgnores)} - ERROR");
-                PrintDebug($"{nameof(LoadIgnores)} - {ex.Message}");
+                PrintDebug(nameof(LoadIgnores), $"ERROR {ex.Message}");
             }
-            PrintDebug($"{nameof(LoadIgnores)} - END");
+            PrintDebug(nameof(LoadIgnores), "END");
             return _ignore;
         }
 
         private string CreateDefaultIgnore(string filename)
         {
-            PrintDebug($"{nameof(CreateDefaultIgnore)} - START");
+            PrintDebug(nameof(CreateDefaultIgnore), "START");
             var list = DEF_IGNORELIST.Split(";");
             File.WriteAllLines(filename, list, Encoding.UTF8);
-            PrintDebug($"{nameof(CreateDefaultIgnore)} - END");
+            PrintDebug(nameof(CreateDefaultIgnore), "END");
             return DEF_IGNORELIST;
         }
 
@@ -497,7 +495,7 @@ namespace SyncTools
 
         private string GetLiveData(string url)
         {
-            PrintDebug($"{nameof(GetLiveData)} - START");
+            PrintDebug(nameof(GetLiveData), "START");
             var result = string.Empty;
             try
             {
@@ -507,10 +505,10 @@ namespace SyncTools
             }
             catch(Exception ex)
             {
-                PrintDebug($"{nameof(GetLiveData)} - ERROR");
+                PrintDebug(nameof(GetLiveData), "ERROR");
                 Console.WriteLine(ex.Message);
             }
-            PrintDebug($"{nameof(GetLiveData)} - END");
+            PrintDebug(nameof(GetLiveData), "END");
             return result;
         }
 
@@ -518,7 +516,7 @@ namespace SyncTools
         {
             try
             {
-                PrintDebug($"{nameof(GetDataFromPre)} - START");
+                PrintDebug(nameof(GetDataFromPre), "START");
                 string pattern = @"<pre>(?<data>.*)</pre>";
                 string value = string.Empty;
 
@@ -529,13 +527,12 @@ namespace SyncTools
                     value = match.Groups["data"].Value;
                 }
 
-                PrintDebug($"{nameof(GetDataFromPre)} - END");
+                PrintDebug(nameof(GetDataFromPre), "END");
                 return value;
             }
             catch (Exception ex)
             {
-                PrintDebug($"{nameof(GetDataFromPre)} - ERROR");
-                PrintDebug(ex.Message);
+                PrintDebug(nameof(GetDataFromPre), $"ERROR: {ex.Message}");
                 return string.Empty;
             }
         }
@@ -544,19 +541,19 @@ namespace SyncTools
         {
             try
             {
-                PrintDebug($"{nameof(GetLinesFromPreData)} - START");
+                PrintDebug(nameof(GetLinesFromPreData), "START");
 
                 string pattern = @"<br>";
 
                 var linedArray = Regex.Split(data, pattern, RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.IgnorePatternWhitespace | RegexOptions.ExplicitCapture);
                 var listedLine = linedArray.Select(item => item.Trim()).ToList();
 
-                PrintDebug($"{nameof(GetLinesFromPreData)} - END");
+                PrintDebug(nameof(GetLinesFromPreData), "END");
                 return listedLine;
             }
             catch (Exception ex)
             {
-                PrintDebug($"{nameof(GetLinesFromPreData)} - ERROR");
+                PrintDebug(nameof(GetLinesFromPreData), "ERROR");
                 Console.WriteLine(ex);
                 return new List<string>();
             }
@@ -567,7 +564,7 @@ namespace SyncTools
             var tools = new Dictionary<string, string>();
             try
             {
-                PrintDebug($"{nameof(GetToolsFromList)} - START");
+                PrintDebug(nameof(GetToolsFromList), "START");
 
                 foreach (var line in lines)
                 {
@@ -581,15 +578,15 @@ namespace SyncTools
                     }
                     else
                     {
-                        PrintDebug($"Skipped {line}.");
+                        PrintDebug(nameof(GetToolsFromList), $"Skipped {line}.");
                     }
-                    PrintDebug($"{tools.Count} tools found.");
+                    PrintDebug(nameof(GetToolsFromList), $"{tools.Count} tools found.");
                 }
-                PrintDebug($"{nameof(GetToolsFromList)} - END.");
+                PrintDebug(nameof(GetToolsFromList), "END.");
             }
             catch (Exception ex)
             {
-                PrintDebug($"{nameof(GetToolsFromList)} - ERROR");
+                PrintDebug(nameof(GetToolsFromList), "ERROR");
                 Console.WriteLine(ex);
             }
             return tools;
@@ -600,7 +597,7 @@ namespace SyncTools
         public async Task Run()
         {
             PrintHeaders();
-            PrintDebug($"{nameof(SyncTools)}:{nameof(Run)} - START");
+            PrintDebug($"{nameof(SyncTools)}:{nameof(Run)}", "START");
 
             try
             {
@@ -623,12 +620,11 @@ namespace SyncTools
                 // run download
                 await DownloadUpdates(downloadList);
 
-                PrintDebug($"{nameof(SyncTools)}:{nameof(Run)} - END");
+                PrintDebug($"{nameof(SyncTools)}:{nameof(Run)}", "END");
             }
             catch (Exception ex)
             {
-                PrintDebug($"{nameof(SyncTools)}:{nameof(Run)} - ERROR");
-                PrintDebug($"Exception: {ex.Message}");
+                PrintDebug($"{nameof(SyncTools)}:{nameof(Run)}", $"ERROR: {ex.Message}");
             }
         }
 
