@@ -47,7 +47,6 @@ namespace SyncTools
                 Filename = file_name;
                 CachePath = cache_path;
             }
-
         }
 
         public SyncTools(string[] args)
@@ -72,7 +71,7 @@ namespace SyncTools
                 for (var pos = 0; pos < args.Length; pos++)
                 {
                     var arg = args[pos];
-                    if (arg.StartsWith("-") || arg.StartsWith("--"))
+                    if (arg.StartsWith('-') || arg.StartsWith("--"))
                     {
                         if (arg.Equals("-d", StringComparison.OrdinalIgnoreCase) || arg.Equals("--directory", StringComparison.OrdinalIgnoreCase))
                         {
